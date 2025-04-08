@@ -17,8 +17,9 @@ public class EnemyCharacter : Character
 
     public override void Initialize()
     {
-        base.Initialize();
+        base.Initialize();  // Важно!
 
+        // Дополнительные проверки
         if (MovableComponent == null)
         {
             Debug.LogError("MovableComponent is not initialized in EnemyCharacter.");
@@ -29,10 +30,17 @@ public class EnemyCharacter : Character
             Debug.LogError("CharacterTarget is not assigned in EnemyCharacter.");
         }
 
+        // Инициализируем другие компоненты
         LiveComponent = new CharacterLiveComponent(this);
         DamageComponent = new CharacterDamageComponent(this);
 
         currentState = AIState.MoveToTarget;
+
+        // Инициализируем всё заново
+        if (LiveComponent == null)
+            Debug.LogError("LiveComponent is not set for Enemy.");
+        if (DamageComponent == null)
+            Debug.LogError("DamageComponent is not set for Enemy.");
     }
 
 

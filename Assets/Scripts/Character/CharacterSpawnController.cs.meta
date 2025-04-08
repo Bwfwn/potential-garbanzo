@@ -1,12 +1,9 @@
 fileFormatVersion: 2
-guid: 8c55b30010104204b8122c79292f0082
+guid: 3086355f3c3789c43abd6604ce758866
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - gameData: {instanceID: 0}
-  - characterFactory: {instanceID: 0}
-  - spawnController: {instanceID: 0}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

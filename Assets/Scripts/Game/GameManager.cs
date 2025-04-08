@@ -6,12 +6,13 @@ public class GameManager : MonoBehaviour
 {
     [SerializeField] private GameData gameData;
     [SerializeField] private CharacterFactory characterFactory;
+    [SerializeField] private CharacterSpawnController spawnController;
 
     private ScoreSystem scoreSystem;
 
     private float gameSessionTime;
-    private float timeBetweenEnemySpawn;
     private bool isGameActive;
+
     public static GameManager Instance { get; private set; }
 
     public CharacterFactory CharacterFactory => characterFactory;
@@ -54,34 +55,23 @@ public class GameManager : MonoBehaviour
         player.Initialize();
         player.LiveComponent.onCharacterDeath += CharacterDeathHandler;
 
-        gameSessionTime = 0;
-        timeBetweenEnemySpawn = gameData.TimeBetweetEnemySpawn;
-
+        gameSessionTime = 0f;
         scoreSystem.StartGame();
-
         isGameActive = true;
+
+        spawnController.Initialize(characterFactory);
     }
 
     private void Update()
     {
-        if (!isGameActive) // Проверяем, началась ли игра
+        if (!isGameActive)
             return;
 
-        gameSessionTime += Time.deltaTime;
-        timeBetweenEnemySpawn -= Time.deltaTime;
+        float deltaTime = Time.deltaTime;
 
-        if (timeBetweenEnemySpawn <= 0)
-        {
-            if (characterFactory.Player != null) // Проверка на наличие игрока
-            {
-                SpawnEnemy();
-            }
-            else
-            {
-                Debug.LogWarning("Player is not initialized yet. Skipping enemy spawn.");
-            }
-            timeBetweenEnemySpawn = gameData.TimeBetweetEnemySpawn;
-        }
+        gameSessionTime += deltaTime;
+
+        spawnController.Tick(deltaTime);
 
         if (gameSessionTime >= gameData.SessionTimeSeconds)
         {
@@ -89,8 +79,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-
-    private void CharacterDeathHandler(Character deathCharacter)
+    public void CharacterDeathHandler(Character deathCharacter)
     {
         switch (deathCharacter.CharacterType)
         {
@@ -102,43 +91,11 @@ public class GameManager : MonoBehaviour
                 scoreSystem.AddScore(deathCharacter.CharacterData.ScoreCost);
                 break;
         }
+
         deathCharacter.gameObject.SetActive(false);
         characterFactory.ReturnCharacter(deathCharacter);
-
         deathCharacter.LiveComponent.onCharacterDeath -= CharacterDeathHandler;
     }
-
-    private void SpawnEnemy()
-    {
-        Character enemy = characterFactory.GetCharacter(CharacterType.DefaultEnemy);
-        if (characterFactory.Player == null)
-        {
-            Debug.LogError("Player not assigned in CharacterFactory! Enemy cannot target player.");
-            return;
-        }
-        if (enemy == null)
-        {
-            Debug.LogError("Failed to spawn enemy.");
-            return;
-        }
-
-        enemy.CharacterTarget = characterFactory.Player; // Назначаем цель.
-        Debug.Log($"Enemy spawned with target: {enemy.CharacterTarget.name}");
-
-        Vector3 playerPosition = characterFactory.Player.transform.position;
-        enemy.transform.position = new Vector3(playerPosition.x + GetOffset(), 0, playerPosition.z + GetOffset());
-        enemy.gameObject.SetActive(true);
-        enemy.Initialize();
-        enemy.LiveComponent.onCharacterDeath += CharacterDeathHandler;
-
-        float GetOffset()
-        {
-            bool isPlus = Random.Range(0, 100) % 2 == 0;
-            float offset = Random.Range(gameData.MinSpawnOffset, gameData.MaxSpawnOffset);
-            return (isPlus) ? offset : (-1 * offset);
-        }
-    }
-
 
     private void GameVictory()
     {
